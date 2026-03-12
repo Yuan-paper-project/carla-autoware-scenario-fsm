@@ -1,32 +1,32 @@
-[README.md](https://github.com/user-attachments/files/25948902/README.md)
+[README_EN.md](https://github.com/user-attachments/files/25948918/README_EN.md)
 # CARLA–Autoware Scenario FSM: OpenSCENARIO State Machine Monitoring
 
 [![CARLA](https://img.shields.io/badge/CARLA-0.9.x-blue)](https://github.com/carla-simulator/carla)
 [![Scenario Runner](https://img.shields.io/badge/Scenario%20Runner-OpenSCENARIO-green)](https://github.com/carla-simulator/scenario_runner)
 [![op_bridge](https://img.shields.io/badge/op__bridge-CARLA--Autoware-orange)](https://github.com/hatem-darweesh/op_bridge)
 
-基于有限状态机（FSM）的 OpenSCENARIO 场景执行建模与可视化，用于 **CARLA + Scenario Runner + OpenPlanner (op_bridge)** 与 Autoware 的联合仿真与 ADAS 验证。
+FSM-based OpenSCENARIO scenario execution modeling and visualization for **CARLA + Scenario Runner + OpenPlanner (op_bridge)** co-simulation with Autoware and ADAS validation.
 
 This repository provides **FSM-based scenario execution monitoring** for scenario-based validation of ADAS/ADS, combining **CARLA Simulator**, **Scenario Runner**, and the **OpenPlanner bridge ([op_bridge](https://github.com/hatem-darweesh/op_bridge))** with Autoware, and mapping OpenSCENARIO Storyboard elements to explicit runtime states with ROS 2 logging and HTML visualization.
 
 ---
 
-## 概述 / Overview
+## Overview
 
-- **问题**：传统 OpenSCENARIO/Scenario Runner 对场景执行过程的可观测性不足，Story/Act/Event/Action 的激活与终止多封装在解释器内部，难以做阶段化分析与对齐。
-- **方案**：将 .xosc 中的 Storyboard 层次（Story → Act → ManeuverGroup → Maneuver → Event → Action）映射为可观测的运行时状态，通过 **ROS 2 话题** 发布状态变更，并用 **HTML 可视化工具** 实时展示结构与执行状态。
+- **Problem**: Traditional OpenSCENARIO/Scenario Runner toolchains offer limited observability of scenario execution; the activation and termination of Story/Act/Event/Action are mostly encapsulated inside the interpreter, making phase-wise analysis and alignment difficult.
+- **Approach**: Map the Storyboard hierarchy in .xosc (Story → Act → ManeuverGroup → Maneuver → Event → Action) to observable runtime states, publish state changes via **ROS 2 topics**, and display structure and execution state in real time with an **HTML visualization tool**.
 
-相关研究见论文：*From State Machines to Traffic Safety: Benchmarking Driver Assistance Systems Using Structured Scenario Models* (Forschungspraktikum Mengchen CAI, TUM).
+Related work: *From State Machines to Traffic Safety: Benchmarking Driver Assistance Systems Using Structured Scenario Models* (Forschungspraktikum Mengchen CAI, TUM).
 
 ---
 
-## 系统架构 / Architecture
+## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
 │  CARLA Simulator (0.9.x)                                                 │
 │  ┌─────────────────────┐    OpenSCENARIO (.xosc)                        │
-│  │  Scenario Runner     │ ◄─────── 场景描述与行为树执行                   │
+│  │  Scenario Runner     │ ◄─────── Scenario description & behavior tree   │
 │  │  (open_scenario.py)  │    StoryElementStatusToBlackboard → Blackboard │
 │  └──────────┬──────────┘    + ROS2 Logger → /scenario_runner/log         │
 └─────────────┼───────────────────────────────────────────────────────────┘
@@ -34,87 +34,87 @@ This repository provides **FSM-based scenario execution monitoring** for scenari
               │  op_bridge (OpenPlanner CARLA–Autoware bridge)
               │  https://github.com/hatem-darweesh/op_bridge
               │  - op_ros2_agent.py: CARLA agent ↔ ROS 2 / Autoware
-              │  - run_srunner_agent_ros2.sh 等脚本
+              │  - run_srunner_agent_ros2.sh and related scripts
               ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
 │  ROS 2 / Autoware Universe                                               │
-│  - 感知、规划、控制闭环                                                    │
-│  - 订阅 /scenario_runner/log 获取场景元素状态 (RUNNING / END / CANCEL)     │
+│  - Perception, planning, control closed loop                             │
+│  - Subscribe to /scenario_runner/log for element states (RUNNING/END/…)  │
 └─────────────────────────────────────────────────────────────────────────┘
               │
               │  /scenario_runner/log (JSON)
               ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
 │  xosc_html_visualizer.py                                                 │
-│  - 解析 .xosc 得到静态结构 (Init, Story, Act, ManeuverGroup, Event, …)   │
-│  - 订阅 ROS 2 log，更新 FSM 状态 (IDLE / RUNNING / COMPLETED / CANCELLED) │
-│  - 生成 HTML 页面：结构视图 + 执行状态视图，定时刷新                       │
+│  - Parse .xosc for static structure (Init, Story, Act, ManeuverGroup,…)  │
+│  - Subscribe to ROS 2 log, update FSM (IDLE/RUNNING/COMPLETED/CANCELLED) │
+│  - Generate HTML: structure view + execution state view, auto-refresh    │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 依赖与相关项目 / Dependencies
+## Dependencies
 
-| 组件 | 说明 |
-|------|------|
-| **CARLA** | 仿真环境（文中使用 0.9.15，与 op_bridge 搭配时需注意版本，op_bridge 官方支持 0.9.13）。 |
-| **Scenario Runner** | 执行 OpenSCENARIO 1.x (.xosc)，解析 Storyboard 并驱动 CARLA 中的交通参与者。 [CARLA Scenario Runner](https://github.com/carla-simulator/scenario_runner) |
-| **op_bridge** | **OpenPlanner ROS 桥接**：连接 CARLA 与 Autoware/OpenPlanner，提供 agent 与 ROS 2 的映射。 **[op_bridge](https://github.com/hatem-darweesh/op_bridge)** 支持 CARLA 0.9.13、Scenario Runner、Python 2.7/3 与 ROS 1；与 Autoware/ROS 2 的集成可参考其 `op_scripts/run_srunner_agent.sh` 及 ROS 2 移植版本（如 `run_srunner_agent_ros2.sh`）。 |
-| **Autoware Universe** | 自动驾驶栈（感知、规划、控制），与 CARLA 通过 op_bridge 闭环。 |
-| **ROS 2** | 用于状态日志话题 `/scenario_runner/log` 与可视化订阅。 |
+| Component | Description |
+|-----------|-------------|
+| **CARLA** | Simulation environment (0.9.15 used in the paper; op_bridge officially supports 0.9.13—check version compatibility). |
+| **Scenario Runner** | Executes OpenSCENARIO 1.x (.xosc), parses Storyboard and drives traffic participants in CARLA. [CARLA Scenario Runner](https://github.com/carla-simulator/scenario_runner) |
+| **op_bridge** | **OpenPlanner ROS bridge**: connects CARLA with Autoware/OpenPlanner and provides the agent–ROS 2 mapping. **[op_bridge](https://github.com/hatem-darweesh/op_bridge)** supports CARLA 0.9.13, Scenario Runner, Python 2.7/3 and ROS 1; for Autoware/ROS 2 integration see `op_scripts/run_srunner_agent.sh` and the ROS 2 port (e.g. `run_srunner_agent_ros2.sh`). |
+| **Autoware Universe** | Autonomous driving stack (perception, planning, control), closed loop with CARLA via op_bridge. |
+| **ROS 2** | Used for the state log topic `/scenario_runner/log` and visualization subscription. |
 
-环境变量示例（与 op_bridge 文档一致，路径请按本机修改）：
+Example environment variables (adjust paths for your setup; see op_bridge README for full list):
 
 ```bash
 export CARLA_ROOT=/path/to/carla
 export SCENARIO_RUNNER_ROOT=/path/to/scenario_runner
-export LEADERBOARD_ROOT=/path/to/op_bridge   # 或本仓库
+export LEADERBOARD_ROOT=/path/to/op_bridge   # or this repo
 export TEAM_CODE_ROOT=/path/to/op_agent
 export PYTHONPATH=$PYTHONPATH:${CARLA_ROOT}/PythonAPI
-# ... 其余见 op_bridge README
+# ... see op_bridge README for the rest
 ```
 
 ---
 
-## 本仓库内容 / Repository Contents
+## Repository Contents
 
-| 文件 | 说明 |
-|------|------|
-| **open_scenario.py** | 基于 [CARLA scenario_runner](https://github.com/carla-simulator/scenario_runner) 中 `srunner/scenarios/open_scenario.py` 的**上游版本**（或兼容接口）。用于将 OpenSCENARIO 转为 py_trees 行为树，并用 **StoryElementStatusToBlackboard** 把 Story/Act/Scene/Maneuver/Event/Action 的状态写入 Blackboard。修改版会在此基础上增加 **ROS 2 日志**（见下方「与上游的差异」）。 |
-| **xosc_html_visualizer.py** | OpenSCENARIO **HTML 可视化**：解析 .xosc 得到层次结构，订阅 `/scenario_runner/log`，维护 FSM 状态并生成 HTML（结构视图 + 执行状态视图，支持 IDLE/RUNNING/COMPLETED/CANCELLED 颜色区分，定时刷新）。 |
-| **README_changed open-scenario.md** | 对 `open_scenario.py` **修改版与上游的差异说明**（英文）：ROS2 logger、终止去重、Init 精简（仅控制器+速度）、移除天气与演员增删等。 |
+| File | Description |
+|------|-------------|
+| **open_scenario.py** | Upstream (or interface-compatible) version from [CARLA scenario_runner](https://github.com/carla-simulator/scenario_runner) (`srunner/scenarios/open_scenario.py`). Converts OpenSCENARIO to a py_trees behavior tree and uses **StoryElementStatusToBlackboard** to write Story/Act/Scene/Maneuver/Event/Action state to the Blackboard. A modified version adds **ROS 2 logging** (see “Differences from Upstream” below). |
+| **xosc_html_visualizer.py** | **HTML visualizer** for OpenSCENARIO: parses .xosc for hierarchy, subscribes to `/scenario_runner/log`, maintains FSM state and generates HTML (structure view + execution state view, with IDLE/RUNNING/COMPLETED/CANCELLED color coding and periodic refresh). |
+| **README_changed open-scenario.md** | Describes **differences between a modified open_scenario.py and upstream** (in English): ROS2 logger, termination deduplication, simplified Init (controller + speed only), removal of weather and actor add/delete, etc. |
 
 ---
 
-## 与上游 open_scenario.py 的差异 / Differences from Upstream
+## Differences from Upstream open_scenario.py
 
-本仓库中的 **open_scenario.py** 为上游 scenario_runner 的版本；在实际联合仿真中通常会使用一个**修改版**，主要变化包括：
+The **open_scenario.py** in this repo is the upstream scenario_runner version. In practice, a **modified** version is often used for co-simulation; main changes:
 
 1. **StoryElementStatusToBlackboard**
-   - 增加 `ros2_logger = get_logger()`，在 `initialise()` 中打 `RUNNING`，在 `terminate()` 中打 `END`/`CANCEL` 等 JSON 到 ROS 2。
-   - 终止时用 blackboard 的 `termination_flag` 去重，避免重复日志。
+   - Add `ros2_logger = get_logger()`; in `initialise()` log `RUNNING`, in `terminate()` log `END`/`CANCEL` etc. as JSON to ROS 2.
+   - Use a blackboard `termination_flag` at termination to avoid duplicate logs.
 
-2. **Init 行为**
-   - 仅保留 **ControllerAction** 与 **初始速度**；移除 LateralAction、RoutingAction、天气行为、EntityAction 等（由外部或 op_bridge 侧处理）。
+2. **Init behavior**
+   - Keep only **ControllerAction** and **initial speed**; remove LateralAction, RoutingAction, weather, EntityAction, etc. (handled elsewhere or by op_bridge).
 
-3. **移除**
-   - `_create_weather_behavior()`、`_initialize_actors()` 等，不再在本文件中处理天气与演员增删。
+3. **Removed**
+   - `_create_weather_behavior()`, `_initialize_actors()`, etc.; weather and actor add/delete are no longer handled in this file.
 
-详细对照见 **[README_changed open-scenario.md](README_changed%20open-scenario.md)**。
+See **[README_changed open-scenario.md](README_changed%20open-scenario.md)** for a detailed comparison.
 
 ---
 
-## 运行流程示例 / How to Run
+## How to Run
 
-以下步骤需在**多个终端**中依次执行（先启动 CARLA，再启动 Scenario Runner，再启动 op_bridge/agent，最后启动可视化）。
+Run the following in **separate terminals** (start CARLA first, then Scenario Runner, then op_bridge/agent, then the visualizer).
 
-**1. 启动 CARLA**
+**1. Start CARLA**
 ```bash
 cd ~/CC/carla_0.9.15 && make launch
 ```
 
-**2. 设置环境变量并启动 Scenario Runner**（新开终端，加载 OpenSCENARIO 文件，例如 `CyclistCrossing.xosc`）
+**2. Set environment variables and start Scenario Runner** (new terminal; load an OpenSCENARIO file, e.g. `CyclistCrossing.xosc`)
 ```bash
 export CARLA_ROOT=${HOME}/CC/carla_0.9.15
 export PYTHONPATH="${CARLA_ROOT}/PythonAPI/carla/":${PYTHONPATH}
@@ -123,45 +123,45 @@ cd ~/CC/op_carla/scenario_runner
 python3 scenario_runner.py --openscenario srunner/examples/CyclistCrossing.xosc --timeout 1600
 ```
 
-**3. 启动 op_bridge 与 Autoware 端 agent**（新开终端，连接 CARLA 与 Autoware）
+**3. Start op_bridge and Autoware agent** (new terminal; connect CARLA and Autoware)
 ```bash
 source /opt/ros/humble/setup.bash
 source ~/CC/autoware/install/setup.bash
 . ~/CC/op_carla/op_bridge/op_scripts/run_srunner_agent_ros2.sh
 ```
 
-**4. 启动 HTML 可视化**（新开终端，订阅 `/scenario_runner/log` 并生成/刷新 HTML）
+**4. Start HTML visualizer** (new terminal; subscribes to `/scenario_runner/log` and generates/refreshes HTML)
 ```bash
 python3 ~/CC/op_carla/scenario_runner/srunner/tools/xosc_html_visualizer.py ~/CC/op_carla/scenario_runner/srunner/examples/CyclistCrossing.xosc
 ```
-在浏览器打开生成的 `xosc_fsm.html`（脚本会输出路径；或在该目录执行 `python -m http.server 8000` 后访问），即可看到静态结构与实时执行状态。
+Open the generated `xosc_fsm.html` in a browser (path is printed; or run `python -m http.server 8000` in that directory and open the URL) to see the static structure and live execution state.
 
-> 其他场景：将上述 `CyclistCrossing.xosc` 替换为 `FollowLeadingVehicle.xosc`、`PedestrianCrossingFront.xosc`、`IntersectionCollisionAvoidance.xosc` 等即可。
-
----
-
-## 场景与 ADAS 验证 / Scenarios & ADAS Validation
-
-论文与实验中使用的代表性 .xosc 场景包括：
-
-- **FollowLeadingVehicle.xosc** / **OscControllerExample.xosc** — ACC 跟车
-- **CyclistCrossing.xosc** / **PedestrianCrossingFront.xosc** — AEB/VRU 避让
-- **IntersectionCollisionAvoidance.xosc** — 交叉口冲突
-
-通过 FSM 可将「前车减速」「行人/自行车开始横穿」「 ego 制动」等语义阶段与 OpenSCENARIO 的 Event/Action 对齐，便于阶段化 KPI 与回归测试。
+> For other scenarios, replace `CyclistCrossing.xosc` with e.g. `FollowLeadingVehicle.xosc`, `PedestrianCrossingFront.xosc`, or `IntersectionCollisionAvoidance.xosc`.
 
 ---
 
-## 参考文献与链接 / References
+## Scenarios & ADAS Validation
 
-- 论文：*From State Machines to Traffic Safety: Benchmarking Driver Assistance Systems Using Structured Scenario Models* (Y. Gao, M. Cai, J. Betz, TUM).
-- 公开仓库：[https://github.com/MengchenCAI/carla-autoware-scenario-fsm](https://github.com/MengchenCAI/carla-autoware-scenario-fsm)
-- **OpenPlanner CARLA–Autoware 桥接**：[**op_bridge**](https://github.com/hatem-darweesh/op_bridge) — OpenPlanner ROS bridge for CARLA and Scenario Runner.
+Representative .xosc scenarios used in the paper and experiments:
+
+- **FollowLeadingVehicle.xosc** / **OscControllerExample.xosc** — ACC car-following
+- **CyclistCrossing.xosc** / **PedestrianCrossingFront.xosc** — AEB / VRU collision avoidance
+- **IntersectionCollisionAvoidance.xosc** — Intersection conflict
+
+The FSM allows alignment of semantic phases (e.g. “leading vehicle deceleration”, “pedestrian/cyclist starts crossing”, “ego braking”) with OpenSCENARIO Events and Actions, supporting phase-wise KPIs and regression testing.
+
+---
+
+## References
+
+- Paper: *From State Machines to Traffic Safety: Benchmarking Driver Assistance Systems Using Structured Scenario Models* (Y. Gao, M. Cai, J. Betz, TUM).
+- Public repo: [https://github.com/MengchenCAI/carla-autoware-scenario-fsm](https://github.com/MengchenCAI/carla-autoware-scenario-fsm)
+- **OpenPlanner CARLA–Autoware bridge**: [**op_bridge**](https://github.com/hatem-darweesh/op_bridge) — OpenPlanner ROS bridge for CARLA and Scenario Runner.
 - [CARLA Scenario Runner](https://github.com/carla-simulator/scenario_runner) — OpenSCENARIO support.
-- [ASAM OpenSCENARIO](https://www.asam.net/standards/detail/openscenario/) — 场景描述标准.
+- [ASAM OpenSCENARIO](https://www.asam.net/standards/detail/openscenario/) — Scenario description standard.
 
 ---
 
-## 许可证 / License
+## License
 
-本仓库中的 `open_scenario.py` 遵循 CARLA scenario_runner 的原始许可（如 MIT）；其余代码与文档的许可见仓库根目录 LICENSE 文件（如有）。
+The **open_scenario.py** in this repository follows the original CARLA scenario_runner license (e.g. MIT). For other code and documentation, see the LICENSE file in the repository root, if present.
